@@ -213,12 +213,6 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
           <div class="chart-md" id="chart-model-monthly"></div>
         </div>
       </div>
-      <div class="card"><div class="card-header"><div><h3>모델별 일별 판매수량</h3><p>최근 90일</p></div></div>
-        <div class="card-body">
-          <div class="filter-bar"><label>모델</label><select id="model-select-daily" onchange="updateModelDaily()" style="min-width:200px"></select></div>
-          <div class="chart-md" id="chart-model-daily"></div>
-        </div>
-      </div>
     </div>
 
     <!-- ===== 카테고리 분석 ===== -->
@@ -250,13 +244,19 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
               <label>모델</label><select id="model-market-select" onchange="updateModelMarket()" style="min-width:200px"></select>
             </div>
             <div id="model-target-summary" style="margin-bottom:16px"></div>
-            <div class="grid-2" style="margin-bottom:16px">
-              <div><div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text2)">마켓별 판매 비중</div><div class="chart-md" id="chart-model-mkt-pie"></div></div>
-              <div><div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text2)">마켓별 일별 추이</div><div class="chart-md" id="chart-model-mkt-daily"></div></div>
+            <div style="margin-bottom:16px">
+              <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text2)">마켓별 판매 비중</div><div class="chart-md" id="chart-model-mkt-pie"></div>
             </div>
-            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text2)">일별 마켓별 판매수량 (최근 30일)</div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <div style="font-size:13px;font-weight:600;color:var(--text2)">일별 마켓별 판매수량</div>
+              <select id="daily-month-select" onchange="updateDailyTable()" style="font-size:12px;border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--text2);background:white;outline:none"></select>
+            </div>
             <div class="table-wrap" id="model-daily-table"></div>
           </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-header"><div><h3>모델별 월별 판매량 / 목표 / 진척률</h3><p id="model-summary-subtitle"></p></div></div>
+          <div class="card-body"><div id="model-monthly-summary-table"></div></div>
         </div>
       </div>
 
@@ -363,11 +363,18 @@ function initOverview() {
   sel.innerHTML=allMonths2026.map(m=>'<option value="'+m+'">'+m.replace('2026-','')+'월</option>').join('');sel.value=latestMonth;updateTargetChart();
 }
 function updateTargetChart() {
+  const MKTS_ORDER=['네이버','쿠팡','지마켓','SSG','알리','11번가','기타몰','도소매'];
   const m=document.getElementById('target-month-select').value,d=SALES_TARGETS[m];if(!d)return;
-  const tg=MARKETS.map(m2=>d[m2]?.target||0),ac=MARKETS.map(m2=>d[m2]?.actual||0);
-  const mx=Math.max(d['네이버']?.actual||0,d['네이버']?.target||0);
-  getChart('chart-targets').setOption({tooltip:{trigger:'axis',formatter:ttRevenue},legend:{data:['목표','실적'],bottom:0},grid:{left:80,right:20,top:20,bottom:40},xAxis:{type:'category',data:MARKETS,axisLabel:{fontSize:11}},yAxis:{type:'value',max:mx>0?Math.round(mx*1.2):undefined,axisLabel:{formatter:v=>fmtEok(v)},splitLine:{lineStyle:{color:'#F1F5F9'}}},
-    series:[{name:'목표',type:'bar',data:tg,itemStyle:{color:'#E2E8F0'},barGap:'5%',barMaxWidth:35},{name:'실적',type:'bar',data:ac,itemStyle:{color:'#3B82F6'},barMaxWidth:35,label:{show:true,position:'top',formatter:p=>{if(!p.value)return'';const pct=tg[p.dataIndex]>0?((p.value/tg[p.dataIndex])*100).toFixed(0)+'%':'';return fmtEok(p.value)+(pct?' ('+pct+')':'');},fontSize:10,color:'#374151'}}]});
+  const pcts=MKTS_ORDER.map(m2=>{const t=d[m2]?.target||0,a=d[m2]?.actual||0;return t>0?Math.round(a/t*100):0;});
+  getChart('chart-targets').setOption({
+    tooltip:{trigger:'axis',formatter:p=>{const m2=MKTS_ORDER[p[0].dataIndex];const t=d[m2]?.target||0,a=d[m2]?.actual||0;return m2+'<br>실적: '+fmtW(a)+'<br>목표: '+fmtW(t)+'<br>달성률: '+p[0].value+'%';}},
+    grid:{left:60,right:20,top:30,bottom:40},
+    xAxis:{type:'category',data:MKTS_ORDER,axisLabel:{fontSize:11}},
+    yAxis:{type:'value',max:120,axisLabel:{formatter:v=>v+'%'},splitLine:{lineStyle:{color:'#F1F5F9'}}},
+    series:[{type:'bar',data:pcts.map(v=>({value:v,itemStyle:{color:v>=100?'#3B82F6':v>=90?'#10B981':v>=70?'#F59E0B':'#EF4444'}})),barMaxWidth:45,
+      label:{show:true,position:'top',formatter:p=>p.value>0?p.value+'%':'',fontSize:11,color:'#374151'},
+      markLine:{data:[{yAxis:100,lineStyle:{color:'#64748B',width:1.5,type:'dashed'},label:{position:'end',formatter:'100%',color:'#64748B',fontSize:10}}]}}]
+  });
 }
 
 // ===== MARKET =====
@@ -382,7 +389,8 @@ function initMarket() {
   getChart('chart-market-month').setOption({tooltip:{trigger:'axis',formatter:ttRevenue},legend:{data:['이번달','전월'],bottom:0},grid:{left:70,right:20,top:20,bottom:40},xAxis:{type:'category',data:mm.map(r=>r['마켓']),axisLabel:{fontSize:11}},yAxis:{type:'value',axisLabel:{formatter:v=>fmtEok(v)},splitLine:{lineStyle:{color:'#F1F5F9'}}},
     series:[{name:'이번달',type:'bar',data:mm.map(r=>r.cur_revenue||0),itemStyle:{color:'#10B981'},barMaxWidth:25},{name:'전월',type:'bar',data:mm.map(r=>r.prev_revenue||0),itemStyle:{color:'#CBD5E1'},barMaxWidth:25}]});
   const ts=MARKETS.map((m,i)=>({name:m,type:'line',smooth:true,lineStyle:{width:2},itemStyle:{color:MARKET_COLORS[m]||COLORS[i]},data:allMonths2026.map(mo=>SALES_TARGETS[mo]?.[m]?.actual||0)}));
-  getChart('chart-market-trend').setOption({tooltip:{trigger:'axis',formatter:ttRevenue},legend:{data:MARKETS,bottom:0,textStyle:{fontSize:11},icon:'circle'},grid:{left:70,right:20,top:20,bottom:60},xAxis:{type:'category',data:allMonths2026.map(m=>m.replace('2026-','')+'월')},yAxis:{type:'value',axisLabel:{formatter:v=>fmtEok(v)},splitLine:{lineStyle:{color:'#F1F5F9'}}},series:ts});
+  const naverMax=Math.max(...allMonths2026.map(m=>SALES_TARGETS[m]?.['네이버']?.actual||0),1);
+  getChart('chart-market-trend').setOption({tooltip:{trigger:'axis',formatter:ttRevenue},legend:{data:MARKETS,bottom:0,textStyle:{fontSize:11},icon:'circle'},grid:{left:70,right:20,top:20,bottom:60},xAxis:{type:'category',data:allMonths2026.map(m=>m.replace('2026-','')+'월')},yAxis:{type:'value',max:Math.round(naverMax*1.2),axisLabel:{formatter:v=>fmtEok(v)},splitLine:{lineStyle:{color:'#F1F5F9'}}},series:ts});
   let rc='';MARKETS.forEach(m=>{const r=RETURN_RATES[m];if(!r)return;const c=r.return_rate>3?'#EF4444':r.return_rate>2?'#F59E0B':'#10B981';rc+='<div class="return-card"><div class="mkt">'+m+'</div><div class="rt" style="color:'+c+'">'+r.return_rate.toFixed(2)+'%</div><div class="det">반품 '+fmt(r.return_qty)+' / 판매 '+fmt(r.sales_qty)+'</div></div>';});
   document.getElementById('return-cards').innerHTML=rc;
   const rd=MARKETS.map(m=>RETURN_RATES[m]?.return_rate||0);
@@ -395,8 +403,7 @@ function initModel() {
   document.getElementById('week-period-top5').textContent=WEEK_COMP.period.current.start+' ~ '+WEEK_COMP.period.current.end+' vs '+WEEK_COMP.period.previous.start+' ~ '+WEEK_COMP.period.previous.end;
   const opts=allModels.slice(0,50).map(m=>'<option value="'+m+'">'+m+'</option>').join('');
   document.getElementById('model-select-monthly').innerHTML=opts;
-  document.getElementById('model-select-daily').innerHTML=opts;
-  updateTopGrowth();updateTopDecline();updateModelMonthly();updateModelDaily();updateModelWeekChart();updateModelMonthChart();
+  updateTopGrowth();updateTopDecline();updateModelMonthly();updateModelWeekChart();updateModelMonthChart();
 }
 function updateTopGrowth() {
   const n=parseInt(document.getElementById('top-growth-count').value),data=TOP5.growth.slice(0,n);
@@ -413,12 +420,6 @@ function updateModelMonthly() {
   const data=MODEL_MONTHLY.filter(r=>r['모델명']===m&&r['년월']>=START_MONTH).sort((a,b)=>a['년월']<b['년월']?-1:1);
   getChart('chart-model-monthly').setOption({tooltip:{trigger:'axis',formatter:p=>p[0].axisValue+': '+fmt(p[0].value)+'개'},grid:{left:50,right:20,top:20,bottom:30},xAxis:{type:'category',data:data.map(r=>r['년월'].replace('2026-','')+'월')},yAxis:{type:'value',splitLine:{lineStyle:{color:'#F1F5F9'}}},
     series:[{type:'bar',data:data.map(r=>r.units),itemStyle:{color:'#3B82F6'},barMaxWidth:40,label:{show:true,position:'top',formatter:p=>p.value>0?fmt(p.value):'',fontSize:11,color:'#374151'}}]});
-}
-function updateModelDaily() {
-  const m=document.getElementById('model-select-daily').value;
-  const data=MODEL_DAILY.filter(r=>r['모델명']===m).sort((a,b)=>a['일자']<b['일자']?-1:1);
-  getChart('chart-model-daily').setOption({tooltip:{trigger:'axis',formatter:p=>p[0].axisValue+': '+fmt(p[0].value)+'개'},grid:{left:50,right:20,top:20,bottom:60},xAxis:{type:'category',data:data.map(r=>r['일자'].slice(5)),axisLabel:{fontSize:10,rotate:45}},yAxis:{type:'value',splitLine:{lineStyle:{color:'#F1F5F9'}}},
-    series:[{type:'bar',data:data.map(r=>r.units),itemStyle:{color:'#3B82F6'},barMaxWidth:12}]});
 }
 function getModelCompData(compData, selectId) {
   const v=document.getElementById(selectId).value,isBot=v.startsWith('bot'),cnt=parseInt(v.replace(/^(top|bot)/,''));
@@ -470,7 +471,10 @@ function initSku() {
   const opts=allModels.slice(0,50).map(m=>'<option value="'+m+'">'+m+'</option>').join('');
   document.getElementById('sku-model-select').innerHTML=opts;
   document.getElementById('model-market-select').innerHTML=opts;
-  updateModelMarket();updateSkuAnalysis();
+  const ds=document.getElementById('daily-month-select');
+  ds.innerHTML=allMonths2026.map(m=>'<option value="'+m+'">'+m.replace('2026-','')+'월</option>').join('');
+  ds.value=latestMonth;
+  updateModelMarket();updateSkuAnalysis();renderModelMonthlySummary();
 }
 function updateSkuAnalysis() {
   const model=document.getElementById('sku-model-select').value;
@@ -520,13 +524,76 @@ function updateModelMarket() {
   const mAgg={};MARKETS.forEach(m=>{mAgg[m]=0;});data.forEach(r=>{if(mAgg[r['마켓']]!==undefined)mAgg[r['마켓']]+=r.units;});
   const am=MARKETS.filter(m=>mAgg[m]>0);
   getChart('chart-model-mkt-pie').setOption({tooltip:{formatter:p=>p.name+': '+fmt(p.value)+'개 ('+p.percent+'%)'},legend:{orient:'vertical',right:10,top:'center',textStyle:{fontSize:11}},series:[{type:'pie',radius:['40%','72%'],center:['38%','50%'],data:am.map(m=>({name:m,value:mAgg[m]})),label:{show:false},itemStyle:{color:p=>MARKET_COLORS[p.name]||COLORS[p.dataIndex%COLORS.length]}}]});
-  const dates=[...new Set(data.map(r=>r['일자']))].sort();
-  getChart('chart-model-mkt-daily').setOption({tooltip:{trigger:'axis',formatter:ttUnits},legend:{data:am,bottom:0,textStyle:{fontSize:11}},grid:{left:50,right:20,top:20,bottom:60},xAxis:{type:'category',data:dates.map(d=>d.slice(5)),axisLabel:{fontSize:10,rotate:45}},yAxis:{type:'value',splitLine:{lineStyle:{color:'#F1F5F9'}}},
-    series:am.map((m,i)=>({name:m,type:'line',smooth:true,itemStyle:{color:MARKET_COLORS[m]||COLORS[i]},lineStyle:{width:2},data:dates.map(d=>{const r=data.find(r2=>r2['일자']===d&&r2['마켓']===m);return r?r.units:0;})}))});
-  const rd=dates.slice(-30).reverse();
-  let h='<table class="data-table"><thead><tr><th>날짜</th>';am.forEach(m=>{h+='<th class="num">'+m+'</th>';});h+='<th class="num">합계</th></tr></thead><tbody>';
-  rd.forEach(date=>{const dd=data.filter(r=>r['일자']===date);const t=dd.reduce((s,r)=>s+r.units,0);if(!t)return;h+='<tr><td>'+date.slice(5)+'</td>';am.forEach(m=>{const r=dd.find(r2=>r2['마켓']===m);h+='<td class="num">'+(r&&r.units>0?fmt(r.units):'-')+'</td>';});h+='<td class="num" style="font-weight:600">'+fmt(t)+'</td></tr>';});
-  h+='</tbody></table>';document.getElementById('model-daily-table').innerHTML=h;
+  updateDailyTable();
+}
+
+function updateDailyTable() {
+  const model=document.getElementById('model-market-select').value;
+  const month=document.getElementById('daily-month-select').value;
+  const data=MODEL_DAILY_MARKET.filter(r=>r['모델명']===model);
+  const mAgg={};MARKETS.forEach(m=>{mAgg[m]=0;});data.forEach(r=>{if(mAgg[r['마켓']]!==undefined)mAgg[r['마켓']]+=r.units;});
+  const am=MARKETS.filter(m=>mAgg[m]>0);
+  const filtered=data.filter(r=>r['일자'].startsWith(month));
+  const dates=[...new Set(filtered.map(r=>r['일자']))].sort().reverse();
+  let h='<table class="data-table"><thead><tr><th>날짜</th>';
+  am.forEach(m=>{h+='<th class="num">'+m+'</th>';});
+  h+='<th class="num">합계</th></tr></thead><tbody>';
+  if(dates.length===0){h+='<tr><td colspan="'+(am.length+2)+'" style="text-align:center;padding:20px;color:#94A3B8">'+month.replace('2026-','')+'월 데이터가 없습니다</td></tr>';}
+  else{dates.forEach(date=>{const dd=filtered.filter(r=>r['일자']===date);const t=dd.reduce((s,r)=>s+r.units,0);if(!t)return;h+='<tr><td>'+date.slice(5)+'</td>';am.forEach(m=>{const r=dd.find(r2=>r2['마켓']===m);h+='<td class="num">'+(r&&r.units>0?fmt(r.units):'-')+'</td>';});h+='<td class="num" style="font-weight:600">'+fmt(t)+'</td></tr>';});}
+  h+='</tbody>';
+  if(dates.length>0){
+    h+='<tfoot><tr style="background:#EFF6FF"><td style="font-weight:700;padding:8px 14px">합계</td>';
+    am.forEach(m=>{const t=filtered.filter(r=>r['마켓']===m).reduce((s,r)=>s+r.units,0);h+='<td class="num" style="font-weight:700">'+fmt(t)+'</td>';});
+    const total=filtered.reduce((s,r)=>s+r.units,0);
+    h+='<td class="num" style="font-weight:700;color:#3B82F6">'+fmt(total)+'</td></tr></tfoot>';
+  }
+  h+='</table>';
+  document.getElementById('model-daily-table').innerHTML=h;
+}
+
+function renderModelMonthlySummary() {
+  const monthlyAct={};
+  MODEL_MONTHLY.filter(r=>r['년월']>=START_MONTH&&r['년월']<=latestMonth).forEach(r=>{
+    if(!monthlyAct[r['모델명']])monthlyAct[r['모델명']]={};
+    monthlyAct[r['모델명']][r['년월']]=r.units;
+  });
+  const rows=Object.entries(MODEL_TARGETS).map(([model,targets])=>{
+    let ta=0,tt=0;const months={};
+    allMonths2026.forEach(m=>{const t=targets[m]||0,a=(monthlyAct[model]||{})[m]||0;ta+=a;tt+=t;months[m]={a,t};});
+    return{model,months,ta,tt};
+  }).sort((a,b)=>b.ta-a.ta);
+  document.getElementById('model-summary-subtitle').textContent='모델별목표 기준 전체 ('+rows.length+'개 모델)';
+  const colW=130,minW=180+allMonths2026.length*colW;
+  let h='<div style="overflow-x:auto;max-height:560px;overflow-y:auto"><table class="data-table" style="min-width:'+minW+'px">';
+  h+='<thead><tr><th style="min-width:180px;position:sticky;left:0;background:#F8FAFC;z-index:2">모델명</th>';
+  allMonths2026.forEach(m=>{h+='<th class="num" style="min-width:'+colW+'px">'+m.replace('2026-','')+'월</th>';});
+  h+='<th class="num" style="min-width:100px">누적합계</th></tr></thead><tbody>';
+  rows.forEach((row,idx)=>{
+    const bg=idx%2===0?'#fff':'#FAFAFA';
+    h+='<tr><td style="font-size:12px;font-weight:600;white-space:nowrap;position:sticky;left:0;background:'+bg+';z-index:1">'+row.model+'</td>';
+    allMonths2026.forEach(m=>{const{a,t}=row.months[m];
+      if(t===0){h+='<td class="num" style="font-size:12px;color:#94A3B8">'+(a>0?fmt(a):'-')+'</td>';}
+      else{const p=a/t,c=progressColor(p),pct=Math.round(p*100);
+        h+='<td style="padding:6px 12px;min-width:'+colW+'px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="font-weight:600">'+fmt(a)+'</span><span style="font-weight:700;color:'+c+'">'+pct+'%</span></div><div style="font-size:10px;color:#94A3B8;margin-bottom:3px">목표 '+fmt(t)+'</div><div style="height:4px;background:#F1F5F9;border-radius:4px"><div style="height:4px;background:'+c+';border-radius:4px;width:'+Math.min(p*100,100)+'%"></div></div></td>';
+      }
+    });
+    h+='<td class="num" style="font-weight:700">'+fmt(row.ta);
+    if(row.tt>0)h+='<div style="font-size:10px;color:#94A3B8">/'+fmt(row.tt)+'</div>';
+    h+='</td></tr>';
+  });
+  h+='</tbody><tfoot><tr style="background:#EFF6FF"><td style="font-weight:700;padding:8px 14px;position:sticky;left:0;background:#EFF6FF;z-index:2">전체 합계</td>';
+  allMonths2026.forEach(m=>{
+    const ta=rows.reduce((s,r)=>s+(r.months[m]?.a||0),0),tt=rows.reduce((s,r)=>s+(r.months[m]?.t||0),0);
+    const p=tt>0?ta/tt:0,c=progressColor(p);
+    h+='<td style="padding:6px 12px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="font-weight:700">'+fmt(ta)+'</span>';
+    if(tt>0)h+='<span style="font-weight:700;color:'+c+'">'+Math.round(p*100)+'%</span>';
+    h+='</div>';
+    if(tt>0)h+='<div style="font-size:10px;color:#64748B;margin-bottom:3px">목표 '+fmt(tt)+'</div><div style="height:4px;background:#BFDBFE;border-radius:4px"><div style="height:4px;background:'+c+';border-radius:4px;width:'+Math.min(p*100,100)+'%"></div></div>';
+    h+='</td>';
+  });
+  const grand=rows.reduce((s,r)=>s+r.ta,0);
+  h+='<td class="num" style="font-weight:700;color:#3B82F6">'+fmt(grand)+'</td></tr></tfoot></table></div>';
+  document.getElementById('model-monthly-summary-table').innerHTML=h;
 }
 
 // ===== INIT =====
