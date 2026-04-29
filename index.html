@@ -625,15 +625,17 @@ function renderModelMonthlySummary() {
   }).sort((a,b)=>b.a-a.a);
   const totalA=rows.reduce((s,r)=>s+r.a,0),totalT=rows.reduce((s,r)=>s+r.t,0);
   document.getElementById('model-summary-subtitle').textContent=selMonth.replace('2026-','')+'월 실적 ('+rows.length+'개 모델)';
-  let h='<div style="overflow-x:auto"><table class="data-table">';
-  h+='<thead><tr><th style="max-width:80px">모델명</th><th class="num">실적</th><th class="num">목표</th><th class="num">달성률</th></tr></thead><tbody>';
-  rows.forEach((row)=>{
-    const{a,t,model}=row;
-    const p=t>0?a/t:0,c=progressColor(p),pct=t>0?Math.round(p*100)+' %':'—';
-    h+='<tr><td style="font-size:12px;font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+model+'">'+model+'</td><td class="num">'+fmt(a)+'</td><td class="num">'+(t>0?fmt(t):'-')+'</td><td class="num" style="font-weight:700;color:'+(t>0?c:'#94A3B8')+'">'+pct+'</td></tr>';
+  const ROW='display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid #F1F5F9;gap:8px';
+  const NAME='flex:1;min-width:0;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  const STATS='display:flex;align-items:center;gap:10px;flex-shrink:0;font-size:12px;white-space:nowrap';
+  const HDR='display:flex;align-items:center;padding:6px 14px 6px;border-bottom:2px solid #E2E8F0;gap:8px;font-size:11px;font-weight:600;color:var(--text2)';
+  let h='<div style="'+HDR+'"><div style="flex:1">모델명</div><div style="display:flex;gap:10px;flex-shrink:0"><span style="min-width:44px;text-align:right">실적</span><span style="min-width:44px;text-align:right">목표</span><span style="min-width:40px;text-align:right">달성률</span></div></div>';
+  rows.forEach(({a,t,model})=>{
+    const p=t>0?a/t:0,c=progressColor(p),pct=t>0?Math.round(p*100)+'%':'—';
+    h+='<div style="'+ROW+'" title="'+model+'"><div style="'+NAME+'">'+model+'</div><div style="'+STATS+'"><span style="min-width:44px;text-align:right">'+fmt(a)+'</span><span style="min-width:44px;text-align:right;color:#94A3B8">'+(t>0?fmt(t):'-')+'</span><span style="min-width:40px;text-align:right;font-weight:700;color:'+(t>0?c:'#94A3B8')+'">'+pct+'</span></div></div>';
   });
   const tp=totalT>0?totalA/totalT:0,tc=progressColor(tp);
-  h+='</tbody><tfoot><tr style="background:#EFF6FF"><td style="font-weight:700;padding:8px 14px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">전체 합계</td><td class="num" style="font-weight:700">'+fmt(totalA)+'</td><td class="num">'+fmt(totalT)+'</td><td class="num" style="font-weight:700;color:'+tc+'">'+(totalT>0?Math.round(tp*100)+'%':'—')+'</td></tr></tfoot></table></div>';
+  h+='<div style="'+ROW+';background:#EFF6FF;font-weight:700"><div style="'+NAME+'">전체 합계</div><div style="'+STATS+'"><span style="min-width:44px;text-align:right">'+fmt(totalA)+'</span><span style="min-width:44px;text-align:right;color:#94A3B8">'+fmt(totalT)+'</span><span style="min-width:40px;text-align:right;font-weight:700;color:'+tc+'">'+(totalT>0?Math.round(tp*100)+'%':'—')+'</span></div></div>';
   document.getElementById('model-monthly-summary-table').innerHTML=h;
 }
 
