@@ -115,9 +115,34 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
   .tab-btn{padding:6px 10px;font-size:11px}
   .grid-2,.grid-3,.grid-65,.grid-56{gap:10px}
 }
+#pin-overlay{position:fixed;inset:0;background:#1E293B;z-index:9999;display:flex;align-items:center;justify-content:center}
+.pin-card{background:#fff;border-radius:20px;padding:40px 32px;text-align:center;width:300px;max-width:90vw}
+.pin-icon{font-size:40px;margin-bottom:12px}
+.pin-title{font-size:18px;font-weight:700;color:#0F172A;margin-bottom:6px}
+.pin-sub{font-size:13px;color:#64748B;margin-bottom:28px}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:24px}
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid #CBD5E1;background:#fff;transition:.15s}
+.pin-dot.filled{background:#3B82F6;border-color:#3B82F6}
+.pin-input-wrap{position:relative;height:0;overflow:visible}
+#pin-input{position:absolute;opacity:0;width:1px;height:1px}
+.pin-error{font-size:13px;color:#EF4444;min-height:20px;margin-top:4px}
+@keyframes pin-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pin-shake{animation:pin-shake .4s ease}
 </style>
 </head>
 <body>
+<div id="pin-overlay">
+  <div class="pin-card" id="pin-card">
+    <div class="pin-icon">&#128274;</div>
+    <div class="pin-title">판매 대시보드</div>
+    <div class="pin-sub">4자리 PIN을 입력하세요</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-input-wrap"><input id="pin-input" type="tel" maxlength="4" inputmode="numeric" autocomplete="off"></div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
 <nav id="sidebar">
   <div class="sidebar-logo"><h1>&#128202; 판매 대시보드</h1><span>영업2팀 &middot; JBL/AKG</span></div>
   <div class="sidebar-nav">
@@ -661,6 +686,36 @@ function renderMarketModelTop() {
 // ===== INIT =====
 document.getElementById('sidebar-footer').innerHTML='데이터: '+SUMMARY.data_latest_date+'<br>갱신: '+SUMMARY.last_updated;
 document.getElementById('topbar-date').textContent='최신: '+SUMMARY.data_latest_date;
+// ===== PIN LOCK =====
+(function(){
+  const CORRECT='2401';
+  const ov=document.getElementById('pin-overlay');
+  if(sessionStorage.getItem('pin_ok')==='1'){ov.style.display='none';return;}
+  document.getElementById('sidebar').style.visibility='hidden';
+  document.getElementById('main').style.visibility='hidden';
+  const inp=document.getElementById('pin-input');
+  const card=document.getElementById('pin-card');
+  const err=document.getElementById('pin-error');
+  function updateDots(v){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<v.length);}
+  function shake(){card.classList.remove('pin-shake');void card.offsetWidth;card.classList.add('pin-shake');}
+  inp.addEventListener('input',function(){
+    const v=this.value.replace(/\D/g,'').slice(0,4);
+    this.value=v;updateDots(v);err.textContent='';
+    if(v.length===4){
+      if(v===CORRECT){
+        sessionStorage.setItem('pin_ok','1');
+        ov.style.display='none';
+        document.getElementById('sidebar').style.visibility='';
+        document.getElementById('main').style.visibility='';
+      } else {
+        shake();err.textContent='PIN이 틀렸습니다';
+        setTimeout(()=>{this.value='';updateDots('');},700);
+      }
+    }
+  });
+  ov.addEventListener('click',()=>inp.focus());
+  setTimeout(()=>inp.focus(),100);
+})();
 initOverview();initMarket();initModel();initCategory();initSku();
 </script>
 </body>
