@@ -195,8 +195,14 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
     <div class="page" id="page-market">
       <div class="page-header"><h2>마켓 분석</h2><p>마켓별 매출 비교 및 추이</p></div>
       <div class="grid-2">
-        <div class="card"><div class="card-header"><div><h3>마켓 전주 동기간 비교</h3><p id="week-period-market"></p></div></div><div class="card-body"><div class="chart-md" id="chart-market-week"></div></div></div>
-        <div class="card"><div class="card-header"><div><h3>마켓 전월 동기간 비교</h3><p id="month-period-market"></p></div></div><div class="card-body"><div class="chart-md" id="chart-market-month"></div></div></div>
+        <div class="card"><div class="card-header"><div><h3>마켓 전주 동기간 비교</h3><p id="week-period-market"></p></div>
+          <select id="week-market-sort" onchange="renderMarketWeekList()" style="border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-family:inherit">
+            <option value="mkt">마켓순</option><option value="growth">성장순</option><option value="decline">하락순</option></select>
+        </div><div class="card-body"><div id="market-week-list"></div></div></div>
+        <div class="card"><div class="card-header"><div><h3>마켓 전월 동기간 비교</h3><p id="month-period-market"></p></div>
+          <select id="month-market-sort" onchange="renderMarketMonthList()" style="border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-family:inherit">
+            <option value="mkt">마켓순</option><option value="growth">성장순</option><option value="decline">하락순</option></select>
+        </div><div class="card-body"><div id="market-month-list"></div></div></div>
       </div>
       <div class="card"><div class="card-header"><div><h3>월별 매출 추이</h3><p>2026년 1월~현재</p></div></div><div class="card-body"><div class="chart-lg" id="chart-market-trend"></div></div></div>
       <div class="card"><div class="card-header"><div><h3>마켓별 반품율</h3></div></div>
@@ -457,12 +463,8 @@ function initMarket() {
   const wp=WEEK_COMP.period,mp=MONTH_COMP.period;
   document.getElementById('week-period-market').textContent='이번주: '+wp.current.start+' ~ '+wp.current.end+' / 전주: '+wp.previous.start+' ~ '+wp.previous.end;
   document.getElementById('month-period-market').textContent='이번달: '+mp.current.start+' ~ '+mp.current.end+' / 전월: '+mp.previous.start+' ~ '+mp.previous.end;
-  const wm=MARKETS.map(m=>WEEK_COMP.market.find(r=>r['마켓']===m)||{'마켓':m,cur_revenue:0,prev_revenue:0});
-  getChart('chart-market-week').setOption({tooltip:{trigger:'axis',formatter:ttRevenue},legend:{data:['지난주','이번주'],bottom:0},grid:{left:70,right:20,top:20,bottom:40},xAxis:{type:'category',data:wm.map(r=>r['마켓']),axisLabel:{fontSize:11}},yAxis:{type:'value',axisLabel:{formatter:v=>(v/10000000).toFixed(0)+'천만'},splitLine:{lineStyle:{color:'#F1F5F9'}}},
-    series:[{name:'지난주',type:'bar',data:wm.map(r=>r.prev_revenue||0),itemStyle:{color:'#F59E0B'},barMaxWidth:25},{name:'이번주',type:'bar',data:wm.map(r=>r.cur_revenue||0),itemStyle:{color:'#3B82F6'},barMaxWidth:25}]});
-  const mm=MARKETS.map(m=>MONTH_COMP.market.find(r=>r['마켓']===m)||{'마켓':m,cur_revenue:0,prev_revenue:0});
-  getChart('chart-market-month').setOption({tooltip:{trigger:'axis',formatter:ttRevenue},legend:{data:['전월','이번달'],bottom:0},grid:{left:70,right:20,top:20,bottom:40},xAxis:{type:'category',data:mm.map(r=>r['마켓']),axisLabel:{fontSize:11}},yAxis:{type:'value',axisLabel:{formatter:v=>fmtEok(v)},splitLine:{lineStyle:{color:'#F1F5F9'}}},
-    series:[{name:'전월',type:'bar',data:mm.map(r=>r.prev_revenue||0),itemStyle:{color:'#F59E0B'},barMaxWidth:25},{name:'이번달',type:'bar',data:mm.map(r=>r.cur_revenue||0),itemStyle:{color:'#10B981'},barMaxWidth:25}]});
+  renderMarketWeekList();
+  renderMarketMonthList();
   const ts=MARKETS.map((m,i)=>({name:m,type:'line',smooth:true,lineStyle:{width:2},itemStyle:{color:MARKET_COLORS[m]||COLORS[i]},data:allMonths2026.map(mo=>{return SALES_TARGETS[mo]?.[m]?.actual||0;})}));
   getChart('chart-market-trend').setOption({tooltip:{trigger:'axis',formatter:(p)=>p[0].axisValue+'<br>'+p.map(s=>s.marker+s.seriesName+': '+fmtW(s.value)).join('<br>')},legend:{data:MARKETS,bottom:0,textStyle:{fontSize:11},icon:'circle'},grid:{left:70,right:20,top:20,bottom:60},xAxis:{type:'category',data:allMonths2026.map(m=>m.replace('2026-','')+'월')},yAxis:{type:'value',min:0,max:900000000,axisLabel:{formatter:v=>fmtEok(v)},splitLine:{lineStyle:{color:'#F1F5F9'}}},series:ts});
   let rc='';MARKETS.forEach(m=>{const r=RETURN_RATES[m];if(!r)return;const c=r.return_rate>3?'#EF4444':r.return_rate>2?'#F59E0B':'#10B981';rc+='<div class="return-card"><div class="mkt">'+m+'</div><div class="rt" style="color:'+c+'">'+r.return_rate.toFixed(2)+'%</div><div class="det">반품 '+fmt(r.return_qty)+' / 판매 '+fmt(r.sales_qty)+'</div></div>';});
@@ -471,6 +473,29 @@ function initMarket() {
   getChart('chart-return-bar').setOption({tooltip:{formatter:p=>p.name+': '+p.value.toFixed(2)+'%'},grid:{left:70,right:20,top:20,bottom:30},xAxis:{type:'category',data:MARKETS,axisLabel:{fontSize:11}},yAxis:{type:'value',axisLabel:{formatter:v=>v+'%'},splitLine:{lineStyle:{color:'#F1F5F9'}}},
     series:[{type:'bar',data:rd.map(v=>({value:v,itemStyle:{color:v>3?'#EF4444':v>2?'#F59E0B':'#10B981'}})),barMaxWidth:35,label:{show:true,position:'top',formatter:p=>p.value.toFixed(2)+'%',fontSize:11}}]});
 }
+function renderMarketCompList(listId,sortId,compData) {
+  const sort=document.getElementById(sortId).value;
+  let data=MARKETS.map(m=>{const r=compData.find(d=>d['마켓']===m);return r||{'마켓':m,cur_units:0,cur_revenue:0,prev_units:0,prev_revenue:0,growth_rate:0};});
+  if(sort==='growth') data=[...data].sort((a,b)=>(b.growth_rate||0)-(a.growth_rate||0));
+  else if(sort==='decline') data=[...data].sort((a,b)=>(a.growth_rate||0)-(b.growth_rate||0));
+  let h='<div style="display:flex;flex-direction:column;gap:8px">';
+  data.forEach(r=>{
+    const rt=r.growth_rate||0,c=rt>0?'var(--success)':rt<0?'var(--danger)':'var(--text2)';
+    const dot=MARKET_COLORS[r['마켓']]||'#94A3B8';
+    const sign=rt>0?'+':'';
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:8px">';
+    h+='<span style="width:10px;height:10px;border-radius:50%;background:'+dot+';flex-shrink:0"></span>';
+    h+='<span style="flex:1;font-size:13px;font-weight:600;min-width:0">'+r['마켓']+'</span>';
+    h+='<div style="text-align:right;flex-shrink:0">';
+    h+='<div style="font-size:11px;color:var(--text2)">'+fmtW(r.prev_revenue)+'('+fmt(r.prev_units)+'개)→'+fmtW(r.cur_revenue)+'('+fmt(r.cur_units)+'개)</div>';
+    h+='<div style="font-size:13px;font-weight:700;color:'+c+'">'+sign+rt+'%</div>';
+    h+='</div></div>';
+  });
+  h+='</div>';
+  document.getElementById(listId).innerHTML=h;
+}
+function renderMarketWeekList(){renderMarketCompList('market-week-list','week-market-sort',WEEK_COMP.market);}
+function renderMarketMonthList(){renderMarketCompList('market-month-list','month-market-sort',MONTH_COMP.market);}
 
 // ===== MODEL =====
 function initModel() {
