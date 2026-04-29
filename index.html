@@ -252,7 +252,7 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
       <div class="tab-content active" id="tab-model-market">
         <div class="card">
           <div class="card-header">
-            <div><h3>모델별 월별 판매량 / 목표 / 진척률</h3><p id="model-summary-subtitle"></p></div>
+            <div><h3>월별 모델별 판매량 / 목표 / 진척률</h3><p id="model-summary-subtitle"></p></div>
             <select id="model-summary-sort-month" onchange="renderModelMonthlySummary()" style="border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-family:inherit"></select>
           </div>
           <div class="card-body"><div id="model-monthly-summary-table"></div></div>
@@ -272,6 +272,27 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
               <select id="daily-month-select" onchange="updateDailyTable()" style="font-size:12px;border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--text2);background:white;outline:none"></select>
             </div>
             <div class="table-wrap" id="model-daily-table"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-header">
+            <div><h3>마켓별 모델 판매량</h3><p id="market-model-period-label"></p></div>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px">&#128176; 매출 TOP10</div>
+                <div id="market-model-revenue-top"></div>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--success);margin-bottom:10px">&#128200; 성장 TOP10</div>
+                <div id="market-model-growth-top"></div>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--danger);margin-bottom:10px">&#128201; 하락 TOP10</div>
+                <div id="market-model-decline-top"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -298,7 +319,7 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 
 <script>
 // ===== DATA =====
-const SUMMARY={"total_revenue": 6301060448, "total_units": 52033, "cur_month_units": 11625, "cur_month_revenue": 1529838070, "total_return_qty": 1380, "last_updated": "2026-04-29", "data_latest_date": "2026-04-28", "monthly_summary": [{"년월": "2026-01", "revenue": 1680133948, "units": 14849}, {"년월": "2026-02", "revenue": 1490492148, "units": 12184}, {"년월": "2026-03", "revenue": 1600596282, "units": 13375}, {"년월": "2026-04", "revenue": 1529838070, "units": 11625}]};
+const SUMMARY={"total_revenue": 6301060448, "total_units": 51653, "cur_month_units": 11435, "cur_month_revenue": 1529838070, "total_return_qty": 1380, "last_updated": "2026-04-29", "data_latest_date": "2026-04-28", "monthly_summary": [{"년월": "2026-01", "revenue": 1680133948, "units": 14966}, {"년월": "2026-02", "revenue": 1490492148, "units": 12056}, {"년월": "2026-03", "revenue": 1600596282, "units": 13196}, {"년월": "2026-04", "revenue": 1529838070, "units": 11435}]};
 const SALES_TARGETS={"2026-01": {"네이버": {"target": 930000000, "actual": 765021028, "progress": 0.8226}, "쿠팡": {"target": 540000000, "actual": 482461234, "progress": 0.8934}, "알리": {"target": 25000000, "actual": 23707884, "progress": 0.9483}, "SSG": {"target": 70000000, "actual": 62815606, "progress": 0.8974}, "지마켓": {"target": 120000000, "actual": 147018068, "progress": 1.2252}, "11번가": {"target": 25000000, "actual": 16958492, "progress": 0.6783}, "기타몰": {"target": 100000000, "actual": 93232273, "progress": 0.9323}, "도소매": {"target": 40000000, "actual": 88919363, "progress": 2.223}, "합계": {"target": 1850000000, "actual": 1680133948, "progress": 0.9082}}, "2026-02": {"네이버": {"target": 900000000, "actual": 685593260, "progress": 0.7618}, "쿠팡": {"target": 500000000, "actual": 417064154, "progress": 0.8341}, "알리": {"target": 30000000, "actual": 4773879, "progress": 0.1591}, "SSG": {"target": 80000000, "actual": 91869034, "progress": 1.1484}, "지마켓": {"target": 110000000, "actual": 125420831, "progress": 1.1402}, "11번가": {"target": 30000000, "actual": 21431009, "progress": 0.7144}, "기타몰": {"target": 110000000, "actual": 79051029, "progress": 0.7186}, "도소매": {"target": 40000000, "actual": 65288952, "progress": 1.6322}, "합계": {"target": 1800000000, "actual": 1490492148, "progress": 0.8281}}, "2026-03": {"네이버": {"target": 850000000, "actual": 745235076, "progress": 0.8767}, "쿠팡": {"target": 500000000, "actual": 534692025, "progress": 1.0694}, "알리": {"target": 45000000, "actual": 10954401, "progress": 0.2434}, "SSG": {"target": 110000000, "actual": 69392675, "progress": 0.6308}, "지마켓": {"target": 90000000, "actual": 38571740, "progress": 0.4286}, "11번가": {"target": 30000000, "actual": 24389523, "progress": 0.813}, "기타몰": {"target": 130000000, "actual": 115443212, "progress": 0.888}, "도소매": {"target": 45000000, "actual": 61917630, "progress": 1.3759}, "합계": {"target": 1800000000, "actual": 1600596282, "progress": 0.8892}}, "2026-04": {"네이버": {"target": 800000000, "actual": 649716793, "progress": 0.8121}, "쿠팡": {"target": 550000000, "actual": 446931654, "progress": 0.8126}, "알리": {"target": 25000000, "actual": 6011359, "progress": 0.2405}, "SSG": {"target": 120000000, "actual": 82786046, "progress": 0.6899}, "지마켓": {"target": 90000000, "actual": 92244086, "progress": 1.0249}, "11번가": {"target": 30000000, "actual": 21938824, "progress": 0.7313}, "기타몰": {"target": 140000000, "actual": 152298452, "progress": 1.0878}, "도소매": {"target": 45000000, "actual": 77910856, "progress": 1.7314}, "합계": {"target": 1800000000, "actual": 1529838070, "progress": 0.8499}}, "2026-05": {"네이버": {"target": 936000000, "actual": 0, "progress": 0.0}, "쿠팡": {"target": 562100000, "actual": 0, "progress": 0.0}, "알리": {"target": 33600000, "actual": 0, "progress": 0.0}, "SSG": {"target": 102200000, "actual": 0, "progress": 0.0}, "지마켓": {"target": 110300000, "actual": 0, "progress": 0.0}, "11번가": {"target": 30900000, "actual": 0, "progress": 0.0}, "기타몰": {"target": 129100000, "actual": 0, "progress": 0.0}, "도소매": {"target": 45800000, "actual": 0, "progress": 0.0}, "합계": {"target": 1950000000, "actual": 0, "progress": 0.0}}, "2026-06": {"네이버": {"target": 864000000, "actual": 0, "progress": 0.0}, "쿠팡": {"target": 518900000, "actual": 0, "progress": 0.0}, "알리": {"target": 31000000, "actual": 0, "progress": 0.0}, "SSG": {"target": 94300000, "actual": 0, "progress": 0.0}, "지마켓": {"target": 101800000, "actual": 0, "progress": 0.0}, "11번가": {"target": 28600000, "actual": 0, "progress": 0.0}, "기타몰": {"target": 119200000, "actual": 0, "progress": 0.0}, "도소매": {"target": 42200000, "actual": 0, "progress": 0.0}, "합계": {"target": 1800000000, "actual": 0, "progress": 0.0}}, "2026-07": {"네이버": {"target": 888000000, "actual": 0, "progress": 0.0}, "쿠팡": {"target": 533300000, "actual": 0, "progress": 0.0}, "알리": {"target": 31900000, "actual": 0, "progress": 0.0}, "SSG": {"target": 97000000, "actual": 0, "progress": 0.0}, "지마켓": {"target": 104600000, "actual": 0, "progress": 0.0}, "11번가": {"target": 29300000, "actual": 0, "progress": 0.0}, "기타몰": {"target": 122500000, "actual": 0, "progress": 0.0}, "도소매": {"target": 43400000, "actual": 0, "progress": 0.0}, "합계": {"target": 1850000000, "actual": 0, "progress": 0.0}}, "2026-08": {"네이버": {"target": 864000000, "actual": 0, "progress": 0.0}, "쿠팡": {"target": 518900000, "actual": 0, "progress": 0.0}, "알리": {"target": 31000000, "actual": 0, "progress": 0.0}, "SSG": {"target": 94300000, "actual": 0, "progress": 0.0}, "지마켓": {"target": 101800000, "actual": 0, "progress": 0.0}, "11번가": {"target": 28600000, "actual": 0, "progress": 0.0}, "기타몰": {"target": 119200000, "actual": 0, "progress": 0.0}, "도소매": {"target": 42200000, "actual": 0, "progress": 0.0}, "합계": {"target": 1800000000, "actual": 0, "progress": 0.0}}, "2026-09": {"네이버": {"target": 936000000, "actual": 0, "progress": 0.0}, "쿠팡": {"target": 562100000, "actual": 0, "progress": 0.0}, "알리": {"target": 33600000, "actual": 0, "progress": 0.0}, "SSG": {"target": 102200000, "actual": 0, "progress": 0.0}, "지마켓": {"target": 110300000, "actual": 0, "progress": 0.0}, "11번가": {"target": 30900000, "actual": 0, "progress": 0.0}, "기타몰": {"target": 129100000, "actual": 0, "progress": 0.0}, "도소매": {"target": 45800000, "actual": 0, "progress": 0.0}, "합계": {"target": 1950000000, "actual": 0, "progress": 0.0}}, "2026-10": {"네이버": {"target": 1008000000, "actual": 0, "progress": 0.0}, "쿠팡": {"target": 605400000, "actual": 0, "progress": 0.0}, "알리": {"target": 36200000, "actual": 0, "progress": 0.0}, "SSG": {"target": 110100000, "actual": 0, "progress": 0.0}, "지마켓": {"target": 118800000, "actual": 0, "progress": 0.0}, "11번가": {"target": 33300000, "actual": 0, "progress": 0.0}, "기타몰": {"target": 139000000, "actual": 0, "progress": 0.0}, "도소매": {"target": 49200000, "actual": 0, "progress": 0.0}, "합계": {"target": 2100000000, "actual": 0, "progress": 0.0}}, "2026-11": {"네이버": {"target": 1056000000, "actual": 0, "progress": 0.0}, "쿠팡": {"target": 634200000, "actual": 0, "progress": 0.0}, "알리": {"target": 37900000, "actual": 0, "progress": 0.0}, "SSG": {"target": 115300000, "actual": 0, "progress": 0.0}, "지마켓": {"target": 124400000, "actual": 0, "progress": 0.0}, "11번가": {"target": 34900000, "actual": 0, "progress": 0.0}, "기타몰": {"target": 145700000, "actual": 0, "progress": 0.0}, "도소매": {"target": 51600000, "actual": 0, "progress": 0.0}, "합계": {"target": 2200000000, "actual": 0, "progress": 0.0}}, "2026-12": {"네이버": {"target": 1008000000, "actual": 0, "progress": 0.0}, "쿠팡": {"target": 605400000, "actual": 0, "progress": 0.0}, "알리": {"target": 36200000, "actual": 0, "progress": 0.0}, "SSG": {"target": 110100000, "actual": 0, "progress": 0.0}, "지마켓": {"target": 118800000, "actual": 0, "progress": 0.0}, "11번가": {"target": 33300000, "actual": 0, "progress": 0.0}, "기타몰": {"target": 139000000, "actual": 0, "progress": 0.0}, "도소매": {"target": 49200000, "actual": 0, "progress": 0.0}, "합계": {"target": 2100000000, "actual": 0, "progress": 0.0}}};
 const SALES_ACTUALS={};
 const MARKET_MONTHLY=[{"년월": "2026-01", "마켓": "11번가", "revenue": 16958492, "units": 162}, {"년월": "2026-01", "마켓": "SSG", "revenue": 62815606, "units": 660}, {"년월": "2026-01", "마켓": "기타몰", "revenue": 93232273, "units": 1005}, {"년월": "2026-01", "마켓": "네이버", "revenue": 765021028, "units": 6303}, {"년월": "2026-01", "마켓": "도소매", "revenue": 88919363, "units": 1594}, {"년월": "2026-01", "마켓": "알리", "revenue": 23707884, "units": 205}, {"년월": "2026-01", "마켓": "지마켓", "revenue": 147018068, "units": 706}, {"년월": "2026-01", "마켓": "쿠팡", "revenue": 482461234, "units": 4214}, {"년월": "2026-02", "마켓": "11번가", "revenue": 21431009, "units": 159}, {"년월": "2026-02", "마켓": "SSG", "revenue": 91869034, "units": 559}, {"년월": "2026-02", "마켓": "기타몰", "revenue": 79051029, "units": 870}, {"년월": "2026-02", "마켓": "네이버", "revenue": 685593260, "units": 4785}, {"년월": "2026-02", "마켓": "도소매", "revenue": 65288952, "units": 1244}, {"년월": "2026-02", "마켓": "알리", "revenue": 4773879, "units": 88}, {"년월": "2026-02", "마켓": "지마켓", "revenue": 125420831, "units": 567}, {"년월": "2026-02", "마켓": "쿠팡", "revenue": 417064154, "units": 3912}, {"년월": "2026-03", "마켓": "11번가", "revenue": 24389523, "units": 215}, {"년월": "2026-03", "마켓": "SSG", "revenue": 69392675, "units": 447}, {"년월": "2026-03", "마켓": "기타몰", "revenue": 115443212, "units": 1422}, {"년월": "2026-03", "마켓": "네이버", "revenue": 745235076, "units": 4948}, {"년월": "2026-03", "마켓": "도소매", "revenue": 61917630, "units": 1127}, {"년월": "2026-03", "마켓": "알리", "revenue": 10954401, "units": 123}, {"년월": "2026-03", "마켓": "지마켓", "revenue": 38571740, "units": 245}, {"년월": "2026-03", "마켓": "쿠팡", "revenue": 534692025, "units": 4848}, {"년월": "2026-04", "마켓": "11번가", "revenue": 21938824, "units": 220}, {"년월": "2026-04", "마켓": "SSG", "revenue": 82786046, "units": 383}, {"년월": "2026-04", "마켓": "기타몰", "revenue": 152298452, "units": 1324}, {"년월": "2026-04", "마켓": "네이버", "revenue": 649716793, "units": 4207}, {"년월": "2026-04", "마켓": "도소매", "revenue": 77910856, "units": 1173}, {"년월": "2026-04", "마켓": "알리", "revenue": 6011359, "units": 69}, {"년월": "2026-04", "마켓": "지마켓", "revenue": 92244086, "units": 461}, {"년월": "2026-04", "마켓": "쿠팡", "revenue": 446931654, "units": 3788}];
@@ -512,7 +533,7 @@ function initSku() {
   const ds=document.getElementById('daily-month-select');
   ds.innerHTML=allMonths2026.slice().reverse().map(m=>'<option value="'+m+'">'+m.replace('2026-','')+'월</option>').join('');
   ds.value=latestMonth;
-  updateModelMarket();updateSkuAnalysis();renderModelMonthlySummary();
+  updateModelMarket();updateSkuAnalysis();renderModelMonthlySummary();renderMarketModelTop();
 }
 function updateSkuAnalysis() {
   const model=document.getElementById('sku-model-select').value;
@@ -592,49 +613,46 @@ function updateDailyTable() {
 function renderModelMonthlySummary() {
   const sortSel=document.getElementById('model-summary-sort-month');
   if(!sortSel.options.length){sortSel.innerHTML=allMonths2026.slice().reverse().map(m=>'<option value="'+m+'">'+m.replace('2026-','')+'월</option>').join('');sortSel.value=latestMonth;}
-  const sortMonth=sortSel.value||latestMonth;
+  const selMonth=sortSel.value||latestMonth;
   const monthlyAct={};
-  MODEL_MONTHLY.filter(r=>r['년월']>=START_MONTH&&r['년월']<=latestMonth).forEach(r=>{
-    if(!monthlyAct[r['모델명']])monthlyAct[r['모델명']]={};
-    monthlyAct[r['모델명']][r['년월']]=r.units;
-  });
+  MODEL_MONTHLY.filter(r=>r['년월']===selMonth).forEach(r=>{monthlyAct[r['모델명']]=r.units;});
   const rows=Object.entries(MODEL_TARGETS).map(([model,targets])=>{
-    let ta=0,tt=0;const months={};
-    allMonths2026.forEach(m=>{const t=targets[m]||0,a=(monthlyAct[model]||{})[m]||0;ta+=a;tt+=t;months[m]={a,t};});
-    return{model,months,ta,tt};
-  }).sort((a,b)=>(b.months[sortMonth]?.a||0)-(a.months[sortMonth]?.a||0));
-  document.getElementById('model-summary-subtitle').textContent='모델별목표 기준 전체 ('+rows.length+'개 모델)';
-  const colW=130,minW=180+allMonths2026.length*colW;
-  let h='<div style="overflow-x:auto;max-height:560px;overflow-y:auto"><table class="data-table" style="min-width:'+minW+'px">';
-  h+='<thead><tr><th style="min-width:180px;position:sticky;left:0;background:#F8FAFC;z-index:2">모델명</th>';
-  allMonths2026.forEach(m=>{h+='<th class="num" style="min-width:'+colW+'px">'+m.replace('2026-','')+'월</th>';});
-  h+='<th class="num" style="min-width:100px">누적합계</th></tr></thead><tbody>';
-  rows.forEach((row,idx)=>{
-    const bg=idx%2===0?'#fff':'#FAFAFA';
-    h+='<tr><td style="font-size:12px;font-weight:600;white-space:nowrap;position:sticky;left:0;background:'+bg+';z-index:1">'+row.model+'</td>';
-    allMonths2026.forEach(m=>{const{a,t}=row.months[m];
-      if(t===0){h+='<td class="num" style="font-size:12px;color:#94A3B8">'+(a>0?fmt(a):'-')+'</td>';}
-      else{const p=a/t,c=progressColor(p),pct=Math.round(p*100);
-        h+='<td style="padding:6px 12px;min-width:'+colW+'px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="font-weight:600">'+fmt(a)+'</span><span style="font-weight:700;color:'+c+'">'+pct+'%</span></div><div style="font-size:10px;color:#94A3B8;margin-bottom:3px">목표 '+fmt(t)+'</div><div style="height:4px;background:#F1F5F9;border-radius:4px"><div style="height:4px;background:'+c+';border-radius:4px;width:'+Math.min(p*100,100)+'%"></div></div></td>';
-      }
-    });
-    h+='<td class="num" style="font-weight:700">'+fmt(row.ta);
-    if(row.tt>0)h+='<div style="font-size:10px;color:#94A3B8">/'+fmt(row.tt)+'</div>';
-    h+='</td></tr>';
+    const a=monthlyAct[model]||0,t=targets[selMonth]||0;
+    return{model,a,t};
+  }).sort((a,b)=>b.a-a.a);
+  const totalA=rows.reduce((s,r)=>s+r.a,0),totalT=rows.reduce((s,r)=>s+r.t,0);
+  document.getElementById('model-summary-subtitle').textContent=selMonth.replace('2026-','')+'월 실적 ('+rows.length+'개 모델)';
+  let h='<div style="overflow-x:auto"><table class="data-table">';
+  h+='<thead><tr><th>모델명</th><th class="num">실적</th><th class="num">목표</th><th class="num">달성률</th><th style="min-width:100px">진척</th></tr></thead><tbody>';
+  rows.forEach((row)=>{
+    const{a,t,model}=row;
+    const p=t>0?a/t:0,c=progressColor(p),pct=t>0?Math.round(p*100)+' %':'—';
+    h+='<tr><td style="font-size:12px;font-weight:600">'+model+'</td><td class="num">'+fmt(a)+'</td><td class="num">'+(t>0?fmt(t):'-')+'</td><td class="num" style="font-weight:700;color:'+(t>0?c:'#94A3B8')+'">'+pct+'</td>';
+    if(t>0){h+='<td style="padding:4px 12px"><div style="height:6px;background:#F1F5F9;border-radius:4px"><div style="height:6px;background:'+c+';border-radius:4px;width:'+Math.min(p*100,100)+'%"></div></div></td>';}
+    else{h+='<td></td>';}
+    h+='</tr>';
   });
-  h+='</tbody><tfoot><tr style="background:#EFF6FF"><td style="font-weight:700;padding:8px 14px;position:sticky;left:0;background:#EFF6FF;z-index:2">전체 합계</td>';
-  allMonths2026.forEach(m=>{
-    const ta=rows.reduce((s,r)=>s+(r.months[m]?.a||0),0),tt=rows.reduce((s,r)=>s+(r.months[m]?.t||0),0);
-    const p=tt>0?ta/tt:0,c=progressColor(p);
-    h+='<td style="padding:6px 12px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="font-weight:700">'+fmt(ta)+'</span>';
-    if(tt>0)h+='<span style="font-weight:700;color:'+c+'">'+Math.round(p*100)+'%</span>';
-    h+='</div>';
-    if(tt>0)h+='<div style="font-size:10px;color:#64748B;margin-bottom:3px">목표 '+fmt(tt)+'</div><div style="height:4px;background:#BFDBFE;border-radius:4px"><div style="height:4px;background:'+c+';border-radius:4px;width:'+Math.min(p*100,100)+'%"></div></div>';
-    h+='</td>';
-  });
-  const grand=rows.reduce((s,r)=>s+r.ta,0);
-  h+='<td class="num" style="font-weight:700;color:#3B82F6">'+fmt(grand)+'</td></tr></tfoot></table></div>';
+  const tp=totalT>0?totalA/totalT:0,tc=progressColor(tp);
+  h+='</tbody><tfoot><tr style="background:#EFF6FF"><td style="font-weight:700;padding:8px 14px">전체 합계</td><td class="num" style="font-weight:700">'+fmt(totalA)+'</td><td class="num">'+fmt(totalT)+'</td><td class="num" style="font-weight:700;color:'+tc+'">'+(totalT>0?Math.round(tp*100)+'%':'—')+'</td><td></td></tr></tfoot></table></div>';
   document.getElementById('model-monthly-summary-table').innerHTML=h;
+}
+
+function renderMarketModelTop() {
+  const data=MARKET_MODEL_COMP;
+  const curMonthStr=SUMMARY.data_latest_date?SUMMARY.data_latest_date.slice(0,7):'';
+  const prevD=new Date(curMonthStr+'-01');prevD.setMonth(prevD.getMonth()-1);
+  const prevMonthStr=prevD.getFullYear()+'-'+(prevD.getMonth()+1+'').padStart(2,'0');
+  document.getElementById('market-model-period-label').textContent='이번달('+curMonthStr.slice(5)+'월) vs 전월('+prevMonthStr.slice(5)+'월) 동기간 비교 · 주문일자 기준';
+  const revTop=[...data].filter(r=>r.cur_revenue>0).sort((a,b)=>b.cur_revenue-a.cur_revenue).slice(0,10);
+  const growTop=[...data].filter(r=>r.prev_revenue>0).sort((a,b)=>b.growth_rate-a.growth_rate).slice(0,10);
+  const declTop=[...data].filter(r=>r.prev_revenue>0).sort((a,b)=>a.growth_rate-b.growth_rate).slice(0,10);
+  function itemStyle(i){return'display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #F1F5F9;font-size:12px'+(i===0?';border-top:1px solid #F1F5F9':'');}
+  function rankBadge(i){return'<div style="min-width:20px;height:20px;border-radius:50%;background:'+(i<3?['#F59E0B','#94A3B8','#CD7F32'][i]:'#E2E8F0')+';color:'+(i<3?'#fff':'#64748B')+';font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">'+(i+1)+'</div>';}
+  function renderRev(items){return items.map((r,i)=>'<div style="'+itemStyle(i)+'">'+rankBadge(i)+'<div style="flex:1;min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">['+r['마켓']+'] '+r['모델명']+'</div><div style="color:#64748B;font-size:11px">'+fmtW(r.cur_revenue)+'</div></div></div>').join('');}
+  function renderGrowth(items,type){return items.map((r,i)=>{const isUp=r.growth_rate>=0,col=type==='growth'?(isUp?'var(--success)':'var(--danger)'):(isUp?'var(--danger)':'var(--success)');return'<div style="'+itemStyle(i)+'">'+rankBadge(i)+'<div style="flex:1;min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">['+r['마켓']+'] '+r['모델명']+'</div><div style="color:#64748B;font-size:11px">'+fmtW(r.prev_revenue)+' → '+fmtW(r.cur_revenue)+'</div></div><div style="font-weight:700;color:'+col+';white-space:nowrap">'+(r.growth_rate>0?'+':'')+r.growth_rate+'%</div></div>';}).join('');}
+  document.getElementById('market-model-revenue-top').innerHTML=renderRev(revTop);
+  document.getElementById('market-model-growth-top').innerHTML=renderGrowth(growTop,'growth');
+  document.getElementById('market-model-decline-top').innerHTML=renderGrowth(declTop,'decline');
 }
 
 // ===== INIT =====
