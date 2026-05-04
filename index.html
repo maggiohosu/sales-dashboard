@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -128,6 +129,10 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 .pin-error{font-size:13px;color:#EF4444;min-height:20px;margin-top:4px}
 @keyframes pin-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 .pin-shake{animation:pin-shake .4s ease}
+.dl-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:#10B981;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
+.dl-btn:hover{background:#059669}
+.dl-btn::before{content:"↓ "}
+@media(max-width:768px){.dl-btn{font-size:10px;padding:5px 10px}}
 </style>
 </head>
 <body>
@@ -170,7 +175,7 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 
     <!-- ===== 종합현황 ===== -->
     <div class="page active" id="page-overview">
-      <div class="page-header"><h2>종합현황</h2><p>전체 매출 및 목표 대비 달성 현황</p></div>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><div><h2>종합현황</h2><p>전체 매출 및 목표 대비 달성 현황</p></div><button class="dl-btn" onclick="downloadOverview()">엑셀 다운로드</button></div>
       <div class="kpi-grid" id="kpi-overview"></div>
       <div class="card">
         <div class="card-header">
@@ -193,7 +198,7 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 
     <!-- ===== 마켓 분석 ===== -->
     <div class="page" id="page-market">
-      <div class="page-header"><h2>마켓 분석</h2><p>마켓별 매출 비교 및 추이</p></div>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><div><h2>마켓 분석</h2><p>마켓별 매출 비교 및 추이</p></div><button class="dl-btn" onclick="downloadMarket()">엑셀 다운로드</button></div>
       <div class="grid-2">
         <div class="card"><div class="card-header"><div><h3>마켓 전주 동기간 비교</h3><p id="week-period-market"></p></div>
           <select id="week-market-sort" onchange="renderMarketWeekList()" style="border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-family:inherit">
@@ -212,7 +217,7 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 
     <!-- ===== 모델 분석 ===== -->
     <div class="page" id="page-model">
-      <div class="page-header"><h2>모델 분석</h2><p>모델별 판매 추이 및 전주/전월 비교</p></div>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><div><h2>모델 분석</h2><p>모델별 판매 추이 및 전주/전월 비교</p></div><button class="dl-btn" onclick="downloadModel()">엑셀 다운로드</button></div>
       <div class="grid-2">
         <div class="card">
           <div class="card-header"><div><h3>&#128200; 전주 동기간 성장 모델</h3><p id="week-period-top5"></p></div>
@@ -251,7 +256,7 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 
     <!-- ===== 카테고리 분석 ===== -->
     <div class="page" id="page-category">
-      <div class="page-header"><h2>카테고리 분석</h2><p>카테고리별 매출 비중 및 월별 추이</p></div>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><div><h2>카테고리 분석</h2><p>카테고리별 매출 비중 및 월별 추이</p></div><button class="dl-btn" onclick="downloadCategory()">엑셀 다운로드</button></div>
       <div class="grid-56">
         <div class="card"><div class="card-header"><div><h3>카테고리별 매출 비중</h3></div>
             <select id="cat-pie-month" onchange="updateCatPie()" style="border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-family:inherit"></select>
@@ -269,7 +274,7 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 
     <!-- ===== SKU 분석 ===== -->
     <div class="page" id="page-sku">
-      <div class="page-header"><h2>SKU 분석</h2><p>모델별 판매 현황 및 SKU 상세</p></div>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><div><h2>SKU 분석</h2><p>모델별 판매 현황 및 SKU 상세</p></div><button class="dl-btn" onclick="downloadSku()">엑셀 다운로드</button></div>
       <div class="tab-bar">
         <button class="tab-btn active" onclick="showSkuTab('model-market')">모델별 판매</button>
         <button class="tab-btn" onclick="showSkuTab('sku-detail')">SKU별 판매 현황</button>
@@ -706,6 +711,58 @@ function renderMarketModelTop() {
   document.getElementById('market-model-revenue-top').innerHTML=renderRev(revTop);
   document.getElementById('market-model-growth-top').innerHTML=renderGrowth(growTop,'growth');
   document.getElementById('market-model-decline-top').innerHTML=renderGrowth(declTop,'decline');
+}
+
+// ===== EXCEL DOWNLOAD =====
+function xlDl(sheets, filename) {
+  const wb = XLSX.utils.book_new();
+  sheets.forEach(({name, data}) => {
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = data[0].map((_,i) => ({wch: Math.max(10, ...data.map(r => String(r[i]??'').length))}));
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  });
+  XLSX.writeFile(wb, filename);
+}
+function downloadOverview() {
+  const s1=[['년월','목표(원)','실적(원)','진척률(%)']];
+  allMonths2026.forEach(m=>{const d=SALES_TARGETS[m]?.['합계']||{};s1.push([m,d.target||0,d.actual||0,+((d.progress||0)*100).toFixed(1)]);});
+  const s2=[['년월','마켓','목표(원)','실적(원)','진척률(%)']];
+  allMonths2026.forEach(m=>{MARKETS.forEach(mkt=>{const d=SALES_TARGETS[m]?.[mkt]||{};s2.push([m,mkt,d.target||0,d.actual||0,+((d.progress||0)*100).toFixed(1)]);});});
+  xlDl([{name:'월별목표실적',data:s1},{name:'마켓별상세',data:s2}],'종합현황_'+SUMMARY.last_updated+'.xlsx');
+}
+function downloadMarket() {
+  const wp=WEEK_COMP.period,mp=MONTH_COMP.period;
+  const s1=[['마켓','당주수량','당주매출(원)','전주수량','전주매출(원)','증감률(%)','당주기간','전주기간']];
+  WEEK_COMP.market.forEach(r=>s1.push([r['마켓'],r.cur_units,r.cur_revenue,r.prev_units,r.prev_revenue,r.growth_rate,wp.current.start+'~'+wp.current.end,wp.previous.start+'~'+wp.previous.end]));
+  const s2=[['마켓','당월수량','당월매출(원)','전월수량','전월매출(원)','증감률(%)','당월기간','전월기간']];
+  MONTH_COMP.market.forEach(r=>s2.push([r['마켓'],r.cur_units,r.cur_revenue,r.prev_units,r.prev_revenue,r.growth_rate,mp.current.start+'~'+mp.current.end,mp.previous.start+'~'+mp.previous.end]));
+  const s3=[['마켓','판매수량','반품수량','반품률(%)']];
+  MARKETS.forEach(m=>{const r=RETURN_RATES[m]||{};s3.push([m,r.sales_qty||0,r.return_qty||0,r.return_rate||0]);});
+  const s4=[['년월','마켓','매출(원)','수량']];
+  MARKET_MONTHLY.forEach(r=>{if(r['년월']>=START_MONTH)s4.push([r['년월'],r['마켓'],r.revenue,r.units]);});
+  xlDl([{name:'전주마켓비교',data:s1},{name:'전월마켓비교',data:s2},{name:'반품률',data:s3},{name:'마켓월별추이',data:s4}],'마켓분석_'+SUMMARY.last_updated+'.xlsx');
+}
+function downloadModel() {
+  const wp=WEEK_COMP.period,mp=MONTH_COMP.period;
+  const s1=[['모델명','당주수량','당주매출(원)','전주수량','전주매출(원)','증감률(%)','당주기간','전주기간']];
+  WEEK_COMP.model.forEach(r=>s1.push([r['모델명'],r.cur_units,r.cur_revenue,r.prev_units,r.prev_revenue,r.growth_rate,wp.current.start+'~'+wp.current.end,wp.previous.start+'~'+wp.previous.end]));
+  const s2=[['모델명','당월수량','당월매출(원)','전월수량','전월매출(원)','증감률(%)','당월기간','전월기간']];
+  MONTH_COMP.model.forEach(r=>s2.push([r['모델명'],r.cur_units,r.cur_revenue,r.prev_units,r.prev_revenue,r.growth_rate,mp.current.start+'~'+mp.current.end,mp.previous.start+'~'+mp.previous.end]));
+  const s3=[['년월','모델명','수량','매출(원)']];
+  MODEL_MONTHLY.filter(r=>r['년월']>=START_MONTH).forEach(r=>s3.push([r['년월'],r['모델명'],r.units,r.revenue]));
+  xlDl([{name:'전주모델비교',data:s1},{name:'전월모델비교',data:s2},{name:'모델별월별판매',data:s3}],'모델분석_'+SUMMARY.last_updated+'.xlsx');
+}
+function downloadCategory() {
+  const s1=[['년월','카테고리','매출(원)','수량']];
+  CATEGORY_ANALYSIS.filter(r=>r['년월']>=START_MONTH).forEach(r=>s1.push([r['년월'],r['카테고리'],r.revenue,r.units]));
+  xlDl([{name:'카테고리월별',data:s1}],'카테고리분석_'+SUMMARY.last_updated+'.xlsx');
+}
+function downloadSku() {
+  const s1=[['년월','모델명','판매수량','목표수량','진척률(%)']];
+  MODEL_MONTHLY.filter(r=>r['년월']>=START_MONTH&&r['년월']<=latestMonth).forEach(r=>{const t=MODEL_TARGETS[r['모델명']]?.[r['년월']]||0;s1.push([r['년월'],r['모델명'],r.units,t,t>0?+((r.units/t*100).toFixed(1)):0]);});
+  const s2=[['년월','모델명','SKU명','카테고리','수량','매출(원)']];
+  SKU_MONTHLY.filter(r=>r['년월']>=START_MONTH&&r['년월']<=latestMonth).forEach(r=>s2.push([r['년월'],r['모델명'],r['SKU명'],r['카테고리'],r.units,r.revenue]));
+  xlDl([{name:'모델별월별판매',data:s1},{name:'SKU별월별판매',data:s2}],'SKU분석_'+SUMMARY.last_updated+'.xlsx');
 }
 
 // ===== INIT =====
