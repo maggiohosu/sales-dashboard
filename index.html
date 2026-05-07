@@ -592,7 +592,8 @@ function updateCatPie() {
 
 // ===== SKU =====
 function initSku() {
-  const opts=allModels.slice(0,100).sort().map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+  const skuModels=[...new Set(SKU_MASTER.map(r=>r['모델명']))].filter(Boolean).sort();
+  const opts=skuModels.map(m=>'<option value="'+m+'">'+m+'</option>').join('');
   document.getElementById('sku-model-select').innerHTML=opts;
   document.getElementById('model-market-select').innerHTML=opts;
   const ds=document.getElementById('daily-month-select');
@@ -682,10 +683,11 @@ function renderModelMonthlySummary() {
   const selMonth=sortSel.value||latestMonth;
   const monthlyAct={};
   MODEL_MONTHLY.filter(r=>r['년월']===selMonth).forEach(r=>{monthlyAct[r['모델명']]=r.units;});
-  const rows=Object.entries(MODEL_TARGETS).map(([model,targets])=>{
-    const a=monthlyAct[model]||0,t=targets[selMonth]||0;
+  const allModelNames=new Set([...Object.keys(MODEL_TARGETS),...Object.keys(monthlyAct)]);
+  const rows=[...allModelNames].map(model=>{
+    const a=monthlyAct[model]||0,t=(MODEL_TARGETS[model]||{})[selMonth]||0;
     return{model,a,t};
-  }).sort((a,b)=>b.a-a.a);
+  }).filter(r=>r.a>0||r.t>0).sort((a,b)=>a.model<b.model?-1:1);
   const totalA=rows.reduce((s,r)=>s+r.a,0),totalT=rows.reduce((s,r)=>s+r.t,0);
   document.getElementById('model-summary-subtitle').textContent=selMonth.replace('2026-','')+'월 실적 ('+rows.length+'개 모델)';
   const ROW='display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid #F1F5F9;gap:6px';
