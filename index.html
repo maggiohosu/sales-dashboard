@@ -710,8 +710,8 @@ function renderMarketModelTop() {
   const prevMonthStr=prevD.getFullYear()+'-'+(prevD.getMonth()+1+'').padStart(2,'0');
   document.getElementById('market-model-period-label').textContent='이번달('+curMonthStr.slice(5)+'월) vs 전월('+prevMonthStr.slice(5)+'월) 동기간 비교 · 주문일자 기준';
   const revTop=[...data].filter(r=>r.cur_revenue>0).sort((a,b)=>b.cur_revenue-a.cur_revenue).slice(0,10);
-  const growTop=[...data].filter(r=>r.prev_revenue>0).sort((a,b)=>b.growth_rate-a.growth_rate).slice(0,10);
-  const declTop=[...data].filter(r=>r.prev_revenue>0).sort((a,b)=>a.growth_rate-b.growth_rate).slice(0,10);
+  const growTop=[...data].filter(r=>r.prev_revenue>0).sort((a,b)=>(b.cur_revenue-b.prev_revenue)-(a.cur_revenue-a.prev_revenue)).slice(0,10);
+  const declTop=[...data].filter(r=>r.prev_revenue>0).sort((a,b)=>(a.cur_revenue-a.prev_revenue)-(b.cur_revenue-b.prev_revenue)).slice(0,10);
   function itemStyle(i){return'display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #F1F5F9;font-size:12px'+(i===0?';border-top:1px solid #F1F5F9':'');}
   function rankBadge(i){return'<div style="min-width:20px;height:20px;border-radius:50%;background:'+(i<3?['#F59E0B','#94A3B8','#CD7F32'][i]:'#E2E8F0')+';color:'+(i<3?'#fff':'#64748B')+';font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">'+(i+1)+'</div>';}
   function renderRev(items){return items.map((r,i)=>'<div style="'+itemStyle(i)+'">'+rankBadge(i)+'<div style="flex:1;min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">['+r['마켓']+'] '+r['모델명']+'</div><div style="color:#64748B;font-size:11px">'+fmtW(r.cur_revenue)+'</div></div></div>').join('');}
