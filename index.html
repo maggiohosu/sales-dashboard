@@ -592,7 +592,7 @@ function updateCatPie() {
 
 // ===== SKU =====
 function initSku() {
-  const opts=allModels.slice(0,50).map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+  const opts=allModels.slice(0,100).sort().map(m=>'<option value="'+m+'">'+m+'</option>').join('');
   document.getElementById('sku-model-select').innerHTML=opts;
   document.getElementById('model-market-select').innerHTML=opts;
   const ds=document.getElementById('daily-month-select');
