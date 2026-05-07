@@ -592,10 +592,11 @@ function updateCatPie() {
 
 // ===== SKU =====
 function initSku() {
-  const skuModels=[...new Set(SKU_MASTER.map(r=>r['모델명']))].filter(Boolean).sort();
-  const opts=skuModels.map(m=>'<option value="'+m+'">'+m+'</option>').join('');
-  document.getElementById('sku-model-select').innerHTML=opts;
-  document.getElementById('model-market-select').innerHTML=opts;
+  const skuCodes=SKU_MASTER.map(r=>r['SKU코드']).filter(Boolean).sort();
+  const skuOpts=skuCodes.map(s=>'<option value="'+s+'">'+s+'</option>').join('');
+  document.getElementById('sku-model-select').innerHTML=skuOpts;
+  const modelOpts=[...new Set(SKU_MASTER.map(r=>r['모델명']))].filter(Boolean).sort().map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+  document.getElementById('model-market-select').innerHTML=modelOpts;
   const ds=document.getElementById('daily-month-select');
   ds.innerHTML=allMonths2026.slice().reverse().map(m=>'<option value="'+m+'">'+m.replace('2026-','')+'월</option>').join('');
   ds.value=latestMonth;
@@ -603,22 +604,21 @@ function initSku() {
   updateModelMarket();updateSkuAnalysis();renderModelMonthlySummary();renderMarketModelTop();
 }
 function updateSkuAnalysis() {
-  const model=document.getElementById('sku-model-select').value;
+  const sku=document.getElementById('sku-model-select').value;
   const months=[...new Set(SKU_MONTHLY.map(r=>r['년월']))].sort().filter(m=>m>=START_MONTH&&m<=latestMonth);
-  const sd26=SKU_MONTHLY.filter(r=>r['모델명']===model&&r['년월']>=START_MONTH&&r['년월']<=latestMonth);
-  const sa={};sd26.forEach(r=>{if(!sa[r['SKU명']])sa[r['SKU명']]={units:0,revenue:0};sa[r['SKU명']].units+=r.units;sa[r['SKU명']].revenue+=r.revenue;});
-  const skus=Object.entries(sa).sort((a,b)=>b[1].units-a[1].units);
-  const tu=skus.reduce((s,e)=>s+e[1].units,0),tv=skus.reduce((s,e)=>s+e[1].revenue,0);
-  const am=months.filter(m=>sd26.some(r=>r['년월']===m)),mc=Math.max(am.length,1);
+  const sd26=SKU_MONTHLY.filter(r=>r['SKU명']===sku&&r['년월']>=START_MONTH&&r['년월']<=latestMonth);
+  const tu=sd26.reduce((s,r)=>s+r.units,0),tv=sd26.reduce((s,r)=>s+r.revenue,0);
+  const mc=Math.max(sd26.length,1);
   document.getElementById('sku-summary').innerHTML=
-    '<div class="kpi-card"><div class="label">SKU 수</div><div class="value">'+skus.length+'</div></div>'+
+    '<div class="kpi-card"><div class="label">총 판매수량</div><div class="value">'+fmt(tu)+'<span style="font-size:14px;font-weight:400">개</span></div></div>'+
     '<div class="kpi-card"><div class="label">월 평균 판매수량</div><div class="value">'+fmt(Math.round(tu/mc))+'<span style="font-size:14px;font-weight:400">개</span></div><div class="sub">'+mc+'개월 평균</div></div>'+
     '<div class="kpi-card"><div class="label">월 평균 매출</div><div class="value" style="font-size:16px">'+fmtW(Math.round(tv/mc))+'</div><div class="sub">'+mc+'개월 평균</div></div>';
-  getChart('chart-sku-bar').setOption({tooltip:{trigger:'axis'},legend:{data:skus.slice(0,8).map(e=>e[0]),bottom:0,textStyle:{fontSize:10}},grid:{left:50,right:20,top:20,bottom:60},xAxis:{type:'category',data:months.map(m=>m.replace('2026-','')+'월')},yAxis:{type:'value',splitLine:{lineStyle:{color:'#F1F5F9'}}},
-    series:skus.map((e,i)=>({name:e[0],type:'bar',stack:'t',barMaxWidth:50,itemStyle:{color:COLORS[i%COLORS.length]},data:months.map(m=>sd26.find(r=>r['SKU명']===e[0]&&r['년월']===m)?.units||0)}))});
-  getChart('chart-sku-pie').setOption({tooltip:{formatter:p=>p.name+': '+fmt(p.value)+'개 ('+p.percent+'%)'},legend:{orient:'vertical',right:5,top:'center',textStyle:{fontSize:10}},series:[{type:'pie',radius:['38%','70%'],center:['35%','50%'],data:skus.map(e=>({name:e[0],value:e[1].units})),label:{show:false},itemStyle:{color:p=>COLORS[p.dataIndex%COLORS.length]}}]});
-  let h='<table class="data-table"><thead><tr><th>SKU명</th><th class="num">수량</th><th class="num">비중</th><th class="num">매출</th></tr></thead><tbody>';
-  skus.forEach(e=>{h+='<tr><td style="font-size:12px">'+e[0]+'</td><td class="num">'+fmt(e[1].units)+'개</td><td class="num">'+(tu>0?(e[1].units/tu*100).toFixed(1):'0')+'%</td><td class="num">'+fmtW(e[1].revenue)+'</td></tr>';});
+  getChart('chart-sku-bar').setOption({tooltip:{trigger:'axis'},grid:{left:50,right:20,top:20,bottom:30},xAxis:{type:'category',data:months.map(m=>m.replace('2026-','')+'월')},yAxis:{type:'value',splitLine:{lineStyle:{color:'#F1F5F9'}}},
+    series:[{type:'bar',barMaxWidth:50,itemStyle:{color:'#3B82F6'},label:{show:true,position:'top',formatter:p=>p.value>0?fmt(p.value):'',fontSize:11,color:'#374151'},data:months.map(m=>{const r=sd26.find(r=>r['년월']===m);return r?r.units:0;})}]});
+  getChart('chart-sku-pie').setOption({tooltip:{formatter:p=>p.name+': '+fmt(p.value)+'개 ('+p.percent+'%)'},legend:{orient:'vertical',right:5,top:'center',textStyle:{fontSize:10}},series:[{type:'pie',radius:['38%','70%'],center:['35%','50%'],data:sd26.filter(r=>r.units>0).map(r=>({name:r['년월'].replace('2026-','')+'월',value:r.units})),label:{show:false},itemStyle:{color:p=>COLORS[p.dataIndex%COLORS.length]}}]});
+  let h='<table class="data-table"><thead><tr><th>년월</th><th class="num">수량</th><th class="num">매출</th></tr></thead><tbody>';
+  sd26.sort((a,b)=>a['년월']<b['년월']?-1:1).forEach(r=>{h+='<tr><td>'+r['년월']+'</td><td class="num">'+fmt(r.units)+'개</td><td class="num">'+fmtW(r.revenue)+'</td></tr>';});
+  h+='<tr style="font-weight:700"><td>합계</td><td class="num">'+fmt(tu)+'개</td><td class="num">'+fmtW(tv)+'</td></tr>';
   h+='</tbody></table>';document.getElementById('sku-table-wrap').innerHTML=h;
 }
 
