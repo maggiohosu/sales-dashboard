@@ -506,7 +506,7 @@ function renderMarketMonthList(){renderMarketCompList('market-month-list','month
 function initModel() {
   document.getElementById('week-period-top5').textContent=WEEK_COMP.period.current.start+' ~ '+WEEK_COMP.period.current.end+' vs '+WEEK_COMP.period.previous.start+' ~ '+WEEK_COMP.period.previous.end;
   document.getElementById('month-period-top5').textContent=MONTH_COMP.period.current.start+' ~ '+MONTH_COMP.period.current.end+' vs '+MONTH_COMP.period.previous.start+' ~ '+MONTH_COMP.period.previous.end;
-  const opts=allModels.slice(0,50).sort().map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+  const opts=[...allModels].sort().map(m=>'<option value="'+m+'">'+m+'</option>').join('');
   document.getElementById('model-select-monthly').innerHTML=opts;
   updateTopGrowth();updateTopDecline();updateMonthGrowth();updateMonthDecline();updateModelMonthly();
 }
